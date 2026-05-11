@@ -2,12 +2,12 @@ from pathlib import Path
 import pandas as pd
 from process_log import parse_log_file
 
-data_dir = Path("data") / "Task"
+data_dir = Path("data")
 
 log_files = [
-    data_dir / "Go_Off_1.log",
-    data_dir / "Go_Off_2.log",
-    data_dir / "Go_Off_3.log",
+    data_dir / "Task" / "Go_Off_1.log",
+    data_dir / "Task" / "Go_Off_2.log",
+    data_dir / "Task" / "Go_Off_3.log",
 ]
 
 dfs = []
