@@ -1,9 +1,11 @@
 from pathlib import Path
 import pandas as pd
 from process_log import parse_log_file
+from otb_loader import load_otb
 
 data_dir = Path("data")
 
+######### Parsing .log files into df ############
 log_files = [
     data_dir / "Task" / "Go_Off_1.log",
     data_dir / "Task" / "Go_Off_2.log",
@@ -27,3 +29,12 @@ output_path = output_folder / "Go_Off_full.csv"
 full_df.to_csv(output_path, index=False)
 
 print(f"Saved full dataset: {output_path}")
+
+#########TODO: Check packets in .otb+ ############
+#########TODO: Get timestamps from .otb+ ############
+
+data, time, fs, device = load_otb("data/OTB/Go_Off_1.otb+")
+
+print(data.shape)
+print(fs)
+
