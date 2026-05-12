@@ -2,6 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 
+
 def visualize_signal(file_path):
     with open(file_path, "r") as f:
         first_line = f.readline()
@@ -10,13 +11,12 @@ def visualize_signal(file_path):
 
     df = pd.read_csv(file_path, sep=sep)
 
-    if df.columns[0].startswith("Unnamed") or len(df.columns) == 2 and df.columns[0] != "time":
-        df = pd.read_csv(
-            file_path,
-            sep=sep,
-            header=None,
-            names=["time", "signal"]
-        )
+    if (
+        df.columns[0].startswith("Unnamed")
+        or len(df.columns) == 2
+        and df.columns[0] != "time"
+    ):
+        df = pd.read_csv(file_path, sep=sep, header=None, names=["time", "signal"])
         channels = ["signal"]
     else:
         channels = df.columns[1:]

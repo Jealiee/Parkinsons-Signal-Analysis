@@ -34,9 +34,6 @@ def parse_log_file(filepath):
                 "chosen_symbol": None,
                 "feedback": None,
                 "alt_feedback": None,
-                "symbol1_time": None,
-                "symbol2_time": None,
-                "choice_time": None,
             }
 
             continue
