@@ -31,6 +31,8 @@ def parse_log_file(filepath):
                 "loop": None,
                 "symbol1_risk": None,
                 "symbol2_risk": None,
+                "stim1_count": 0,
+                "stim2_count": 0,
                 "chosen_symbol": None,
                 "feedback": None,
                 "alt_feedback": None,
@@ -44,6 +46,15 @@ def parse_log_file(filepath):
         if final_loop_match:
             current["loop"] = int(final_loop_match.group(1))
             continue
+
+        if "TIME STIM1" in line:
+            current["stim1_count"] += 1
+            continue
+
+        if "TIME STIM2" in line:
+            current["stim2_count"] += 1
+            continue
+
         stim1_match = re.search(r"STIM1:\s*(.+)", line)
         if stim1_match:
             current["symbol1_risk"] = extract_risk(stim1_match.group(1))
