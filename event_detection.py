@@ -2,13 +2,7 @@ import numpy as np
 
 
 def detect_trigger_pulses(t, signal, threshold_fraction=0.1, min_interval=0.05):
-    """
-    Detect trigger pulses using rising edges.
-    For each pulse, return:
-    - rising edge time
-    - peak amplitude of that pulse
-    """
-
+  
     signal_shifted = signal - np.min(signal)
     threshold = threshold_fraction * np.max(signal_shifted)
 
