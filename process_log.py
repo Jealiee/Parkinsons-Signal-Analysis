@@ -65,9 +65,10 @@ def parse_log_file(filepath):
             current["symbol2_risk"] = extract_risk(stim2_match.group(1))
             continue
 
-        choice_match = re.search(r"CHOICE POSITION:\s*(first|second)", line)
-        if choice_match:
-            current["chosen_symbol"] = 1 if choice_match.group(1) == "first" else 2
+        if re.fullmatch(r".*CHOICE POSITION:\s*(first|second).*", line):
+            if current["chosen_symbol"] is None:
+                value = "first" if "first" in line else "second"
+                current["chosen_symbol"] = 1 if value == "first" else 2
             continue
 
         if "NOT WIN:" in line:
