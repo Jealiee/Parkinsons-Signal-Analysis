@@ -139,3 +139,18 @@ def get_event_timestamps(files, min_gap=20, stable_samples=20):
         print(f"{stim_name}: {total}")
 
     return result_df
+
+
+def get_response_time(df):
+
+    stim_cols = ["stim1_ts_loop0", "stim1_ts_loop1", "stim2_ts_loop0", "stim2_ts_loop1"]
+    stim = df[stim_cols]
+
+    valid = stim.notna() & stim.le(df["response_ts"], axis=0)
+    stim_masked = stim.where(valid)
+
+    df["last_stim_ts"] = stim_masked.max(axis=1)
+    df["response_time"] = (df["response_ts"] - df["last_stim_ts"]).round(3)    
+    print(len(df))
+
+    return df
