@@ -19,10 +19,10 @@ from lfp_reconstruction import (
 )
 from synchronization import (
     select_sync_point,
+    select_emg_sync_manual_window,
     synchronize_lfp_to_emg,
     plot_sync_check,
     remove_artifacts
-    
 )
 
 from filtering_analysis import (
@@ -37,30 +37,63 @@ from filtering_analysis import (
 # 1. Extract ZIP
 # =========================
 
-zip_path = "Natalia.zip"
-extract_dir = "extracted_data"
+zip_path = r"Julia.zip"
+extract_dir = "extracted_data_Julia"
 
 if not os.path.exists(extract_dir):
     with zipfile.ZipFile(zip_path, "r") as z:
         z.extractall(extract_dir)
 
-
 # =========================
 # 2. Choose block
 # =========================
 
-block = "Go_Off_3"
+patient = "Julia"
+condition = "Off"
+block_number = 1
 
-otb_path = fr"extracted_data\Natalia\Natalia\OTB\{block}.otb+"
-log_path = fr"extracted_data\Natalia\Natalia\Task\{block}.log"
-json_path = fr"extracted_data\Natalia\Natalia\Medtronic\{block}.json"
 
+block = f"Go_{condition}_{block_number}"
+save_name = f"{patient}_{block}"
+
+plot_dir = f"plots_{patient}_{block}"
+
+os.makedirs(plot_dir, exist_ok=True)
+
+print(f"Plots will be saved to: {plot_dir}")
+
+
+def save_plot(filename):
+    plt.savefig(
+        os.path.join(plot_dir, filename),
+        dpi=300,
+        bbox_inches="tight"
+    )
+
+def find_file(root_folder, filename):
+    for root, dirs, files in os.walk(root_folder):
+        if filename in files:
+            return os.path.join(root, filename)
+    raise FileNotFoundError(f"Could not find {filename} inside {root_folder}")
+
+otb_path = find_file(extract_dir, f"{block}.otb+")
+log_path = find_file(extract_dir, f"{block}.log")
+json_path = find_file(extract_dir, f"{block}.json")
 
 # =========================
 # 3. Load OTB
 # =========================
 
 data, t_emg, fs_emg, device_name = load_otb(otb_path)
+
+print("\nSearching for files inside extracted_data:")
+
+for root, dirs, files in os.walk(extract_dir):
+    for file in files:
+        if file.endswith(".otb+") or file.endswith(".log") or file.endswith(".json"):
+            print(os.path.join(root, file))
+
+input("Press Enter after checking the printed paths...")
 
 # DEBUG: plot all OTB channels to identify EMG, AUX1, AUX2
 for ch in range(4):
@@ -90,18 +123,27 @@ plt.figure(figsize=(15, 4))
 plt.plot(t_emg, emg)
 plt.title("Raw EMG")
 plt.xlabel("Time [s]")
+
+save_plot("raw_emg.png")
+
 plt.show()
 
 plt.figure(figsize=(15, 4))
 plt.plot(t_emg, aux1)
 plt.title("AUX1 task events")
 plt.xlabel("Time [s]")
+
+save_plot("aux1_events.png")
+
 plt.show()
 
 plt.figure(figsize=(15, 4))
 plt.plot(t_emg, aux2)
 plt.title("AUX2 responses")
 plt.xlabel("Time [s]")
+
+save_plot("aux2_responses.png")
+
 plt.show()
 
 
@@ -129,6 +171,9 @@ plt.figure(figsize=(15, 4))
 plt.plot(t_emg, aux1_shifted)
 plt.scatter(event_times, event_amplitudes, color="red")
 plt.title("Detected AUX1 rising edges")
+
+save_plot("detected_aux1_edges.png")
+
 plt.show()
 
 plt.figure()
@@ -136,6 +181,9 @@ plt.hist(event_amplitudes, bins=50)
 plt.title("AUX1 event amplitudes")
 plt.xlabel("Amplitude")
 plt.ylabel("Count")
+
+save_plot("aux1_histogram.png")
+
 plt.show()
 
 
@@ -177,6 +225,9 @@ plt.figure(figsize=(15, 4))
 plt.plot(t_emg, aux2_shifted)
 plt.scatter(response_times, response_amplitudes, color="red")
 plt.title("Detected response rising edges")
+
+save_plot("response_edges.png")
+
 plt.show()
 
 print("responses:", len(response_times))
@@ -295,7 +346,10 @@ print("Stim detected from AUX:")
 print("stim1:", len(stim1_times))
 print("stim2:", len(stim2_times))
 
-behavior_df.to_csv(f"{block}_behavior_with_times.csv", index=False)
+behavior_df.to_csv(
+    f"{save_name}_behavior.csv",
+    index=False
+)
 
 # =========================
 # 9. Load and reconstruct LFP
@@ -317,11 +371,9 @@ print(time_check)
 # 10. Manual synchronization
 # =========================
 
-emg_sync_time = select_sync_point(
+emg_sync_time = select_emg_sync_manual_window(
     t_emg,
-    emg,
-    title="EMG: click LAST peak before stimulation disappears",
-    xlim=(0, 14)
+    emg
 )
 
 lfp_sync_time = select_sync_point(
@@ -385,7 +437,7 @@ lfp_filtered = bandpass_filter(
 # =========================
 
 np.savez(
-    f"{block}_preprocessed.npz",
+    f"{save_name}_preprocessed.npz",
     t_emg=t_emg,
     emg=emg,
     t_lfp=t_lfp,
@@ -406,14 +458,14 @@ np.savez(
     lfp_sync_time=lfp_sync_time
 )
 
-print(f"Saved preprocessing file: {block}_preprocessed.npz")
+print(f"Saved preprocessing file: {save_name}_preprocessed.npz")
 plt.figure(figsize=(15, 4))
 plt.plot(t_lfp_clean, lfp_clean, label="Raw clean LFP")
 plt.plot(t_lfp_clean, lfp_filtered, label="Filtered LFP")
 plt.legend()
 plt.title("Raw vs filtered LFP")
 plt.xlabel("Time [s]")
-plt.savefig(f"{block}_filtered_lfp.png")
+save_plot(f"{save_name}_filtered_lfp.png")
 plt.show()
 
 # =========================
