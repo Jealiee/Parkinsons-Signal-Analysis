@@ -145,3 +145,98 @@ def select_sync_point(t, signal, title="Select sync point", xlim=None):
         raise ValueError("No point selected.")
 
     return point[0][0]
+
+def select_emg_sync_zoomed(t, emg, search_xlim=(0, 14), zoom_window=0.8):
+    import numpy as np
+    import matplotlib.pyplot as plt
+
+    mask = (t >= search_xlim[0]) & (t <= search_xlim[1])
+    t_seg = t[mask]
+    emg_seg = emg[mask]
+
+    rectified = np.abs(emg_seg - np.median(emg_seg))
+
+    win = max(10, int(0.05 / np.median(np.diff(t_seg))))
+    kernel = np.ones(win) / win
+    envelope = np.convolve(rectified, kernel, mode="same")
+
+    derivative = np.gradient(envelope, t_seg)
+    drop_idx = np.argmin(derivative)
+    drop_time = t_seg[drop_idx]
+
+    x1 = max(search_xlim[0], drop_time - zoom_window)
+    x2 = min(search_xlim[1], drop_time + zoom_window)
+
+    plt.figure(figsize=(15, 4))
+    plt.plot(t_seg, emg_seg)
+    plt.axvline(drop_time, color="red", linestyle="--", label="estimated drop/change")
+    plt.title("EMG overview: estimated stimulation change")
+    plt.xlabel("Time [s]")
+    plt.ylabel("Amplitude")
+    plt.legend()
+    plt.grid(True)
+    plt.show()
+
+    plt.figure(figsize=(15, 5))
+    plt.plot(t, emg)
+    plt.xlim(x1, x2)
+    plt.title("ZOOMED EMG: click LAST peak before stimulation disappears")
+    plt.xlabel("Time [s]")
+    plt.ylabel("Amplitude")
+    plt.grid(True)
+
+    clicked = plt.ginput(1, timeout=-1)
+    plt.close()
+
+    if len(clicked) == 0:
+        raise RuntimeError("No point selected.")
+
+    sync_time = clicked[0][0]
+
+    print(f"Estimated drop time: {drop_time:.4f} s")
+    print(f"Selected EMG sync time: {sync_time:.4f} s")
+
+    return sync_time
+
+def select_emg_sync_manual_window(t, emg):
+    import matplotlib.pyplot as plt
+
+    # First: choose window
+    plt.figure(figsize=(15, 4))
+    plt.plot(t, emg)
+    plt.title("FULL EMG: click TWO points around the stimulation change")
+    plt.xlabel("Time [s]")
+    plt.ylabel("Amplitude")
+    plt.grid(True)
+
+    points = plt.ginput(2, timeout=-1)
+    plt.close()
+
+    if len(points) < 2:
+        raise RuntimeError("You need to click two points.")
+
+    x1 = min(points[0][0], points[1][0])
+    x2 = max(points[0][0], points[1][0])
+
+    print(f"Selected zoom window: {x1:.3f} s to {x2:.3f} s")
+
+    # Second: zoom and click exact sync point
+    plt.figure(figsize=(15, 5))
+    plt.plot(t, emg)
+    plt.xlim(x1, x2)
+    plt.title("ZOOMED EMG: click LAST peak before stimulation disappears")
+    plt.xlabel("Time [s]")
+    plt.ylabel("Amplitude")
+    plt.grid(True)
+
+    clicked = plt.ginput(1, timeout=-1)
+    plt.close()
+
+    if len(clicked) == 0:
+        raise RuntimeError("No sync point selected.")
+
+    sync_time = clicked[0][0]
+
+    print(f"Selected EMG sync time: {sync_time:.4f} s")
+
+    return sync_time
