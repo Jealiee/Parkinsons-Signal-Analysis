@@ -1,13 +1,15 @@
 import re
 import pandas as pd
 import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
 
-csv_path = r"data\Natalia\dataframe\df_full.csv"
+csv_path = r"data\Julia\dataframe\df_full.csv"
 
 log_files = [
-    r"data\Natalia\Task\Go_Off_1.log",
-    r"data\Natalia\Task\Go_Off_2.log",
-    r"data\Natalia\Task\Go_Off_3.log",
+    r"data\Julia\Task\Go_Off_1.log",
+    r"data\Julia\Task\Go_Off_2.log",
+    r"data\Julia\Task\Go_Off_3.log",
 ]
 
 df = pd.read_csv(csv_path)
@@ -33,6 +35,7 @@ for i, log_file in enumerate(log_files, start=1):
 
     all_log_rts.extend(rts)
 
+
 print(f"\nTotal CSV rows: {len(csv_rt)}")
 print(f"Total LOG RTs : {len(all_log_rts)}")
 
@@ -56,3 +59,13 @@ comparison = pd.DataFrame(
 
 print("\nFirst 10 rows:")
 print(comparison.head(10))
+
+plt.figure(figsize=(6, 6))
+sns.regplot(x=all_log_rts, y=csv_rt, ci=None)
+plt.xlabel("Reaction Time from Log File (s)")
+plt.ylabel("Reaction Time from OTB/CSV (s)")
+
+plt.title(f"RT Comparison (r = {corr:.3f})")
+
+plt.tight_layout()
+plt.show()
